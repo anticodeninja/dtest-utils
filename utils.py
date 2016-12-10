@@ -47,6 +47,30 @@ def read_objects(filename):
                 
     return features, pfeatures
 
+def read_uim(filename):
+    with open(filename, 'r') as input_file:
+        input_wrapper = file_wrapper(input_file)
+
+        rows_count = int(next(input_wrapper))
+        features_count = int(next(input_wrapper))
+        
+        uim = []
+        for i in range(rows_count):
+            uim.append([next(input_wrapper) for j in range(features_count)])
+
+    for row in uim:
+        for i in range(features_count):
+            row[i] = int(row[i])
+                
+    return uim
+
+def binarize(uim):
+    features_count = len(uim[0])
+    
+    for row in uim:
+        for i in range(features_count):
+            row[i] = 1 if row[i] != 0 else 0
+
 def write_objects(filename, features, pfeatures):
     with open(filename, 'w') as output_file:
         output_file.write('{0}\n'.format(len(features)))

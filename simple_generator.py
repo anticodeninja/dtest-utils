@@ -12,7 +12,7 @@ parser.add_argument('objects', type=int, help='amount of objects')
 parser.add_argument('patterns', type=int, help='amount of patterns')
 parser.add_argument('features', type=int, help='amount of features')
 parser.add_argument('-m', '--maximal', type=int, help='maximal value of feature', default=1)
-parser.add_argument('-a', '--absence', type=float, help='maximal probability of absence', default=0)
+parser.add_argument('-a', '--absence-probability', dest='absence_probability', type=float, help='maximal probability of absence', default=0)
 args = parser.parse_args()
 
 generator = genlib.Generator()
@@ -26,7 +26,7 @@ for i in range(len(features_count)):
         generator.add_feature(genlib.Feature(
             genlib.Feature.kinds[i],
             maximal=args.maximal,
-            absence_probability=random.random() * args.absence))
+            absence_probability=random.random() * args.absence_probability))
 
 generator.set_patterns_length(1)
 for i in range(args.patterns):
