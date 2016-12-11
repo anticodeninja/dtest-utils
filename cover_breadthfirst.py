@@ -58,7 +58,7 @@ for current in generator(width):
 
     if coverAll:
         results.append(coverlib.Result([x for x in current]))
-        if results.is_fulfilled():
+        if results.is_full():
             break
 
 for result in results:

@@ -25,7 +25,7 @@ for i in range(len(features_count)):
     for j in range(features_count[i]):
         generator.add_feature(genlib.Feature(
             genlib.Feature.kinds[i],
-            maximal=args.maximal,
+            maximal=random.randint(1, args.maximal),
             absence_probability=random.random() * args.absence_probability))
 
 generator.set_patterns_length(1)

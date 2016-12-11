@@ -35,23 +35,23 @@ width = len(data[0])
 
 utils.binarize(data)
 results = []
-cost_barrier = coverlib.calc_cost([1 for x in range(width)])
+cost_barrier = coverlib.Result([1 for x in range(width)]).cost
 
 tasks = [Task(data, [0 for x in range(width)], [0 for x in range(height)], -1)]
 tasks_performed = 0
 results = coverlib.ResultSet(args.results_limit)
 while len(tasks) > 0:
     task = tasks.pop(0)
-    cost = coverlib.calc_cost(task.mask)
+    result = coverlib.Result(task.mask)
 
-    if cost >= cost_barrier:
+    if result.cost >= cost_barrier:
         continue
 
     tasks_performed += 1
 
     if len(task.rows) == 0:
-        if results.append(coverlib.Result(task.mask)) is not None:
-            if results.is_fulfilled():
+        if results.append(result) is not None:
+            if results.is_full():
                 cost_barrier = results[-1].cost            
         continue
     

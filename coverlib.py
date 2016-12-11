@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-def calc_cost(mask):
-    return sum(mask)
-
 class Result:
     def __init__(self, mask):
         self.mask = mask
-        self.cost = calc_cost(mask)
+        self.cost = sum(mask)
 
     def __repr__(self):
         return "{0}|{1}".format(
@@ -40,9 +37,16 @@ class ResultSet:
         return self.results[index]
 
     def append(self, result):
-        for i in range(len(self.results)):
-            if self.results[i].is_include(result):
-                return
+        index = 0
+        while index < len(self.results):
+            if self.results[index].is_include(result):
+                return None
+            
+            if result.is_include(self.results[index]):
+                self.results.pop(index)
+                continue
+
+            index += 1
 
         index = len(self.results)
         for i in range(len(self.results)):
@@ -50,7 +54,7 @@ class ResultSet:
                 index = i
                 break
 
-        if index is not None and index < self.limit:
+        if index < self.limit:
             self.results.insert(index, result)
 
             if len(self.results) > self.limit:
@@ -60,6 +64,6 @@ class ResultSet:
 
         return index
 
-    def is_fulfilled(self):
+    def is_full(self):
         return len(self.results) == self.limit
 
