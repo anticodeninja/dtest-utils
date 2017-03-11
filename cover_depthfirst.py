@@ -5,6 +5,8 @@ import argparse
 import utils
 import coverlib
 
+from datafile import DataFile
+
 class Task:
     def __init__(self, rows, mask, covering, column):
         self.rows = rows
@@ -26,18 +28,16 @@ class Task:
 parser = argparse.ArgumentParser()
 parser.add_argument('input', help='input file')
 parser.add_argument('-c', '--covering', dest='covering', type=int, help='amount of column which should be covered', default=1)
-parser.add_argument('-l', '--result-limit', dest='results_limit', type=int, help='maximal amount of result', default=1)
+parser.add_argument('-l', '--result-limit', dest='results_limit', type=int, help='maximal amount of result', default=10)
 args = parser.parse_args()
 
-data = utils.read_uim(args.input)
-height = len(data)
-width = len(data[0])
+data = DataFile(args.input)
+uim = [utils.binarize(x) for x in data.uim]
 
-utils.binarize(data)
 results = []
-cost_barrier = coverlib.Result([1 for x in range(width)]).cost
+cost_barrier = coverlib.Result([1 for x in range(data.features_count)]).cost
 
-tasks = [Task(data, [0 for x in range(width)], [0 for x in range(height)], -1)]
+tasks = [Task(uim, [0 for x in range(data.features_count)], [0 for x in range(data.uim_len)], -1)]
 tasks_performed = 0
 results = coverlib.ResultSet(args.results_limit)
 while len(tasks) > 0:
@@ -72,13 +72,13 @@ while len(tasks) > 0:
         rows = task.rows
         covering = task.covering
 
-    weights = [0] * width
+    weights = [0] * data.features_count
     for row in task.rows:
-        for i in range(width):
+        for i in range(data.features_count):
             weights[i] += row[i]
 
     columns = []
-    for i in range(width):
+    for i in range(data.features_count):
         if mask[i] == 0:
             columns.append((i, weights[i]))
     columns.sort(key=lambda x: x[1], reverse=True)

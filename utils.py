@@ -4,12 +4,12 @@
 import random
 import math
 
-class PatternGroup:
-    def __init__(self, pfeature):
-        self.pfeature = pfeature
-        self.features = []
+def calc_comb(n, k):
+    if k > n:
+        return 0
+    return math.factorial(n) // math.factorial(k) // math.factorial(n - k)
 
-def file_wrapper(file_obj):
+def file_to_stream(file_obj):
     for line in file_obj:
         for word in line.split():
             yield word
@@ -24,52 +24,8 @@ def calc_variations(obj, minimal, maximal):
             multiplier *= maximal[i] - minimal[i] + 1
     return multiplier
 
-def read_objects(filename):
-    with open(filename, 'r') as input_file:
-        input_wrapper = file_wrapper(input_file)
-
-        objects_count = int(next(input_wrapper))
-
-        features_count = int(next(input_wrapper))
-        features = []
-        for i in range(objects_count):
-            features.append([next(input_wrapper) for j in range(features_count)])
-        
-        pfeatures_count = int(next(input_wrapper))
-        pfeatures = []
-        for i in range(objects_count):
-            pfeatures.append([next(input_wrapper) for j in range(pfeatures_count)])
-
-    for obj in features:
-        for i in range(features_count):
-            if obj[i] != '-':
-                obj[i] = int(obj[i])
-                
-    return features, pfeatures
-
-def read_uim(filename):
-    with open(filename, 'r') as input_file:
-        input_wrapper = file_wrapper(input_file)
-
-        rows_count = int(next(input_wrapper))
-        features_count = int(next(input_wrapper))
-        
-        uim = []
-        for i in range(rows_count):
-            uim.append([next(input_wrapper) for j in range(features_count)])
-
-    for row in uim:
-        for i in range(features_count):
-            row[i] = int(row[i])
-                
-    return uim
-
-def binarize(uim):
-    features_count = len(uim[0])
-    
-    for row in uim:
-        for i in range(features_count):
-            row[i] = 1 if row[i] != 0 else 0
+def binarize(row):
+    return tuple(1 if x != 0 else 0 for x in row)
 
 def write_objects(filename, features, pfeatures):
     with open(filename, 'w') as output_file:
@@ -82,20 +38,6 @@ def write_objects(filename, features, pfeatures):
         output_file.write('\n{0}\n'.format(len(pfeatures[0])))
         for pfeature in pfeatures:
             output_file.write('{0}\n'.format(' '.join(str(x) for x in pfeature)))
-
-def group_pattern(features, pfeatures):
-    result = {}
-
-    for i in range(len(features)):
-        key = calc_key(pfeatures[i])
-        if key in result:
-            pattern = result[key]
-        else:
-            pattern = PatternGroup(pfeatures[i])
-            result[key] = pattern
-        pattern.features.append(features[i])
-
-    return result
 
 def reduce_objects(features, pfeatures, patterns_take, objects_take):
     patterns = group_pattern(features, pfeatures)
@@ -128,8 +70,80 @@ def reduce_objects(features, pfeatures, patterns_take, objects_take):
 
     return [x[0] for x in result], [x[1] for x in result]
 
-def calc_comb(n, k):
-    if k > n:
-        return 0
+def iterate_last(it):
+    it = iter(it)
+    prev = next(it)
+    for item in it:
+        yield prev, False
+        prev = item
+    yield prev, True
 
-    return math.factorial(n) // math.factorial(k) // math.factorial(n - k)
+def make_header(value, width, filler='=', border=False):
+    if len(value) < width:
+        value = value + ' '
+    if len(value) < width:
+        value = ' ' + value
+        
+    while len(value) < width:
+        if len(value) < width:
+            value = value + filler
+        if len(value) < width:
+            value = filler + value
+
+    if border:
+        real_len = len(value)
+        value = filler * real_len + '\n' + value + '\n' + filler * real_len
+
+    return value
+
+def print_tables(tables,
+                 headers=None,
+                 converters=None,
+                 column_delimiter=' ',
+                 table_delimiter='  ',
+                 header_filler='='):
+    
+    cell_size = [0] * len(tables)
+    cell_count = [0] * len(tables)
+    tables_width = [0] * len(tables)
+    rows = 0
+    patterns = [None] * len(tables)
+
+    if not converters:
+        converters = [str] * len(tables)
+    
+    for i, table in enumerate(tables):
+        converter = converters[i]
+        for row in table:
+            cell_size[i] = max(cell_size[i], max(len(converter(x)) for x in row))
+            cell_count[i] = max(cell_count[i], len(row))
+        rows = max(rows, len(table))
+        patterns[i] = '{{0:{0}}}'.format(cell_size[0])
+        tables_width[i] = cell_size[i] * cell_count[i] + len(column_delimiter) * (cell_count[i] - 1)
+
+    if headers:
+        chunks = []
+        for i, table in enumerate(tables):
+            header = make_header(headers[i], tables_width[i], header_filler)
+            chunks.append(header)
+            chunks.append(table_delimiter)
+        chunks.pop()
+        print(''.join(chunks))
+
+    generators = [(row for row in table) for table in tables]
+    for i in range(rows):
+        chunks = []
+        for i, generator in enumerate(generators):
+            pattern = patterns[i]
+            converter = converters[i] 
+            for x in next(generator):
+                cell = pattern.format(converter(x))
+                for j in range(len(cell), cell_size[i]):
+                    chunks.append(' ')
+                chunks.append(cell)
+                chunks.append(column_delimiter)
+            chunks.pop()
+            chunks.append(table_delimiter)
+        chunks.pop()
+        print(''.join(chunks))
+
