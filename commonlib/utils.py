@@ -4,15 +4,48 @@
 import random
 import math
 
+class InputFileStream:
+
+    def __init__(self, fileobj):
+        self.__file = fileobj
+        self.__line = []
+
+    def read(self):
+        while True:
+            if self.__line is None:
+                return None
+        
+            if len(self.__line) == 0:
+                self.__line = self.__file.readline()
+                self.__line = self.__line.strip().split() if len(self.__line) > 0 else None
+                continue
+
+            return self.__line.pop(0)
+        
+
+class OutputFileStream:
+
+    def __init__(self, fileobj):
+        self.__file = fileobj
+        self.__empty_line = True
+
+    def write(self, *args):
+        for x in args:
+            if x == '\n':
+                self.__file.write('\n')
+                self.__empty_line = True
+                continue
+
+            if not self.__empty_line:
+                self.__file.write(' ')
+            self.__empty_line = False
+                
+            self.__file.write(str(x))
+
 def calc_comb(n, k):
     if k > n:
         return 0
     return math.factorial(n) // math.factorial(k) // math.factorial(n - k)
-
-def file_to_stream(file_obj):
-    for line in file_obj:
-        for word in line.split():
-            yield word
 
 def calc_key(pobj):
     return " ".join(pobj)
@@ -26,18 +59,6 @@ def calc_variations(obj, minimal, maximal):
 
 def binarize(row):
     return tuple(1 if x != 0 else 0 for x in row)
-
-def write_objects(filename, features, pfeatures):
-    with open(filename, 'w') as output_file:
-        output_file.write('{0}\n'.format(len(features)))
-
-        output_file.write('\n{0}\n'.format(len(features[0])))
-        for feature in features:
-            output_file.write('{0}\n'.format(' '.join(str(x) for x in feature)))
-
-        output_file.write('\n{0}\n'.format(len(pfeatures[0])))
-        for pfeature in pfeatures:
-            output_file.write('{0}\n'.format(' '.join(str(x) for x in pfeature)))
 
 def reduce_objects(features, pfeatures, patterns_take, objects_take):
     patterns = group_pattern(features, pfeatures)

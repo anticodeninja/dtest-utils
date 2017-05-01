@@ -54,10 +54,10 @@ class ResultSet:
                 index = i
                 break
 
-        if index < self.limit:
+        if self.limit == 0 or index < self.limit:
             self.results.insert(index, result)
 
-            if len(self.results) > self.limit:
+            if self.limit != 0 and len(self.results) > self.limit:
                 self.results = self.results[:self.limit]
         else:
             index = None    
@@ -65,5 +65,5 @@ class ResultSet:
         return index
 
     def is_full(self):
-        return len(self.results) == self.limit
+        return self.limit != 0 and len(self.results) == self.limit
 

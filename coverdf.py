@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import utils
-import coverlib
+import os
+import sys
 
-from datafile import DataFile
+import commonlib
+import coverlib
 
 class Task:
     def __init__(self, rows, mask, covering, column):
@@ -26,18 +27,26 @@ class Task:
         return "\n".join(result)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('input', help='input file')
-parser.add_argument('-c', '--covering', dest='covering', type=int, help='amount of column which should be covered', default=1)
-parser.add_argument('-l', '--result-limit', dest='results_limit', type=int, help='maximal amount of result', default=10)
+parser.add_argument('input',
+                    help='input file')
+parser.add_argument('output', nargs="?",
+                    help='output file')
+parser.add_argument('--no-transfer', dest='no_transfer', action="store_true",
+                    help='no transfer blocks from input file to output')
+parser.add_argument('-c', '--covering', dest='covering', type=int, default=1,
+                    help='amount of column which should be covered')
+parser.add_argument('-l', '--result-limit', dest='results_limit', type=int, default=10,
+                    help='maximal amount of result')
 args = parser.parse_args()
 
-data = DataFile(args.input)
-uim = [utils.binarize(x) for x in data.uim]
+input_file = commonlib.DataFile()
+input_file.load(args.input)
+uim = [commonlib.binarize(x) for x in input_file.uim]
 
 results = []
-cost_barrier = coverlib.Result([1 for x in range(data.features_count)]).cost
+cost_barrier = coverlib.Result([1 for x in range(input_file.features_count)]).cost
 
-tasks = [Task(uim, [0 for x in range(data.features_count)], [0 for x in range(data.uim_len)], -1)]
+tasks = [Task(uim, [0 for x in range(input_file.features_count)], [0 for x in range(input_file.uim_count)], -1)]
 tasks_performed = 0
 results = coverlib.ResultSet(args.results_limit)
 while len(tasks) > 0:
@@ -72,22 +81,30 @@ while len(tasks) > 0:
         rows = task.rows
         covering = task.covering
 
-    weights = [0] * data.features_count
+    weights = [0] * input_file.features_count
     for row in task.rows:
-        for i in range(data.features_count):
+        for i in range(input_file.features_count):
             weights[i] += row[i]
 
     columns = []
-    for i in range(data.features_count):
+    for i in range(input_file.features_count):
         if mask[i] == 0:
             columns.append((i, weights[i]))
     columns.sort(key=lambda x: x[1], reverse=True)
 
     for column in columns:
         tasks.insert(0, Task(rows, mask, covering, column[0]))
-    
-for result in results:
-    print(result)
 
-print("Stats:")
-print("  performed tasks: {0}".format(tasks_performed))
+if args.output is None:
+    args.output = args.input
+
+output_file = commonlib.DataFile()
+if args.output != '-' and os.path.exists(args.output):
+    output_file.load(args.output)
+if not args.no_transfer:
+    output_file.transfer(input_file)
+output_file.tests[args.covering] = [x.mask for x in results]
+output_file.save(args.output)
+
+print("Stats:", file=sys.stderr)
+print("  performed tasks: {0}".format(tasks_performed), file=sys.stderr)

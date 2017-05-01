@@ -4,7 +4,7 @@
 import argparse
 import genlib
 import random
-import utils
+import commonlib
 
 parser = argparse.ArgumentParser()
 parser.add_argument('output', help='output file')
@@ -40,5 +40,10 @@ for obj in generator.generate(args.objects):
     features.append(obj[0])
     pfeatures.append(obj[1])
 
-utils.write_objects(args.output, features, pfeatures)
-
+datafile = commonlib.DataFile()
+datafile.features = features
+datafile.pfeatures = pfeatures
+datafile.features_min = [x.minimal for x in generator.features]
+datafile.features_max = [x.maximal for x in generator.features]
+datafile.bake()
+datafile.save(args.output)

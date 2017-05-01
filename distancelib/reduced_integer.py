@@ -3,8 +3,8 @@
 
 from itertools import combinations
 
-from .base import BaseAlgorithm
-from utils import calc_comb
+from distancelib.base import BaseAlgorithm
+from commonlib import calc_comb
 
 class ReducedIntegerAlgorithm(BaseAlgorithm):
     def __init__(self, ranges, func):

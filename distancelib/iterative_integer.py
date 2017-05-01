@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from itertools import chain
 
-from .base import BaseAlgorithm
+from distancelib.base import BaseAlgorithm
 
 class IterativeIntegerAlgorithm(BaseAlgorithm):
     def __init__(self, data, func):
